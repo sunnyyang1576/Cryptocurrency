@@ -120,6 +120,70 @@ class PortfolioConstructor():
         return port_df
 
 
+    def create_portfolio_series_double_sorting(self,signal_1,signal_2,equal_weight=True,pivot_table=True):
+        """
+        This function groups the assets at each date based on indicator and calculate the return
+        using either equal-weighted or market cap weighted method.
+
+        :param var_name: str, the colnames of indicator
+        :param equal_weight: boolean, whether to create using equal weighted or market cap weighted method
+        :param pivot_table: boolean, whether to convert the result into pivotal table or not.
+
+        :return: pd.DataFrame, portfolio return dataframe
+
+        """
+        
+        def value_weighted_return(x):
+            
+            tot_cap = sum(x["market_cap"])
+            weight = x["market_cap"]/tot_cap
+            ret = sum(x["ret"]*weight)
+            
+            return ret
+        
+        def equal_weight_return(x):
+            
+            return_series = x["ret"]
+            total_number = len(return_series)
+            
+            return sum(return_series/total_number) 
+        
+        
+        df = self.return_df
+        
+        if equal_weight:
+            
+            port_df = df.groupby([signal_1,signal_2,"year","month","day"]).apply(equal_weight_return)
+        
+        else:
+            
+            port_df = df.groupby([signal_1,signal_2,"year","month","day"]).apply(value_weighted_return)
+        
+        
+        index_df = port_df.index.to_frame()
+        
+        port_df = pd.concat([index_df,port_df],axis=1)
+        
+        port_df.index = range(0,len(port_df))
+        
+        
+        port_df.columns = [signal_1,signal_2,"year","month","day","portfolio_return"]
+        
+        port_df["date"] = port_df["year"].astype(str) + "-" + port_df["month"].astype(str) + "-" + port_df["day"].astype(str)
+        
+        port_df["date"] = pd.to_datetime(port_df["date"])
+        
+        port_df = port_df[[signal_1,signal_2,"date","portfolio_return"]]
+        
+        
+        if pivot_table:
+            
+            port_df = pd.pivot_table(port_df,values="portfolio_return",index=["date"],columns=[signal_1,signal_2])
+        
+        return port_df
+
+
+
 
 
 

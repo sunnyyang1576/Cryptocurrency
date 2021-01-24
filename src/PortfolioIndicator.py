@@ -136,46 +136,46 @@ class PortfolioIndicator():
         """
 
 
-    	indicator_list = []   ### create an empty indicator list used to store indicator
+        indicator_list = []   ### create an empty indicator list used to store indicator
 
-    	for rebalance_date in rebalance_date_series:   ### only update portfolio on the rebalance date
+        for rebalance_date in rebalance_date_series:   ### only update portfolio on the rebalance date
 
-    		sub_df = df[df["date"]==rebalance_date]   ### extract the sub_df at one rebalance date
+            sub_df = df[df["date"]==rebalance_date]   ### extract the sub_df at one rebalance date
 
-    		indicator_1 = self._rank(sub_df,signal_1_name,number_1)   ### apply the quantile rank using the first indicator
+            indicator_1 = self._rank(sub_df,signal_1_name,number_1)   ### apply the quantile rank using the first indicator
 
-    		indicator_1.columns = ["date","ticker","indicator_1"]   ### rename the columns for simplicity of understanding
+            indicator_1.columns = ["date","ticker","indicator_1"]   ### rename the columns for simplicity of understanding
 
-    		sub_df = sub_df.merge(indicator_1,on=["date","ticker"],how="left")   ### merge the indicator_1 back to the original sub_df
+            sub_df = sub_df.merge(indicator_1,on=["date","ticker"],how="left")   ### merge the indicator_1 back to the original sub_df
 
-    		sub_df.index = sub_df["ticker"]   ### reset the index of this sub_df. This is to faciliate the ranking of second indicator
+            sub_df.index = sub_df["ticker"]   ### reset the index of this sub_df. This is to faciliate the ranking of second indicator
 
-    		def qcut(x):   ### Define the rank function that is used to rank the second indicator (the function depends on the name of the second indiator and the number of portfolios)
+            def qcut(x):   ### Define the rank function that is used to rank the second indicator (the function depends on the name of the second indiator and the number of portfolios)
 
-    			indicator_2 = pd.qcut(x[signal_2_name],q=number_2,labels=False,duplicates="drop")
+                indicator_2 = pd.qcut(x[signal_2_name],q=number_2,labels=False,duplicates="drop")
 
-    			return indicator_2
+                return indicator_2
 
-    		indicator_2 = sub_df.groupby("indicator_1").apply(qcut)   ### Apply the self-defined rank function on each group of indiator 1 (wihtin each portfolio on indicator one, rank the asset using indicator 2)
+            indicator_2 = sub_df.groupby("indicator_1").apply(qcut)   ### Apply the self-defined rank function on each group of indiator 1 (wihtin each portfolio on indicator one, rank the asset using indicator 2)
 
-    		index_df = indicator_2.index.to_frame()   ### This is to reindx the output of indicator 2
-    		index_df["indicator_2"] = indicator_2
-    		index_df.index = range(0,index_df.shape[0])
-    		indicator_2 = index_df
+            index_df = indicator_2.index.to_frame()   ### This is to reindx the output of indicator 2
+            index_df["indicator_2"] = indicator_2
+            index_df.index = range(0,index_df.shape[0])
+            indicator_2 = index_df
 
-    		sub_df.index = range(0,sub_df.shape[0])   ### This is to facilitate the following merge
+            sub_df.index = range(0,sub_df.shape[0])   ### This is to facilitate the following merge
 
-    		sub_df = sub_df.merge(indicator_2,on=["indicator_1","ticker"],how="left")   ### merge the indicator 2 back to the origianl sub_df
+            sub_df = sub_df.merge(indicator_2,on=["indicator_1","ticker"],how="left")   ### merge the indicator 2 back to the origianl sub_df
 
-    		indicator_df = sub_df[["date","ticker","indicator_1","indicator_2"]]   ### extract only the indicator columns from sub_df
+            indicator_df = sub_df[["date","ticker","indicator_1","indicator_2"]]   ### extract only the indicator columns from sub_df
 
-    		indicator_list.append(indicator_df)   ### Append the indicator_df to the storage list
+            indicator_list.append(indicator_df)   ### Append the indicator_df to the storage list
 
-    	indicator_df = pd.concat(indicator_list,axis=0)   ### Concate all indicator_df together
+        indicator_df = pd.concat(indicator_list,axis=0)   ### Concate all indicator_df together
 
-    	indicator_df.columns = ["date","ticker",signal_1_name+"_indicator",signal_2_name+"_indicator"]   ### rename of the columns for facilitation.
+        indicator_df.columns = ["date","ticker",signal_1_name+"_indicator",signal_2_name+"_indicator"]   ### rename of the columns for facilitation.
 
-    	return indicator_df
+        return indicator_df
 
 
 
